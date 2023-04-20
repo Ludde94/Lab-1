@@ -54,28 +54,67 @@
     });
 
 async function deleteAlbum(albumId) {
-    console.log(albumId)
-        try {
-            const response = await fetch('/api/albums/:id', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ id: albumId }),
-            });
-
-            const responseData = await response.json();
-            alert(responseData.message);
-
-            if (response.ok) {
-                fetchAlbums();
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        }
+console.log(albumId);
+try {
+    const confirmed = window.confirm("Are you sure you want to delete this album?");
+    if (!confirmed) {
+        return;
     }
 
-    const albumsTable = document.querySelector('#albums-table');
+    const response = await fetch(`/api/albums/${albumId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: albumId }),
+    });
+
+    const responseData = await response.json();
+    alert(responseData.message);
+
+    if (response.ok) {
+        fetchAlbums();
+    }
+} catch (error) {
+    console.error('Error:', error);
+}
+}
+async function updateAlbum(albumId) {
+  console.log(albumId);
+  try {
+    const confirmed = window.confirm("Are you sure you want to update this album?");
+    if (!confirmed) {
+      return;
+    }
+    const title = prompt('Enter new title:');
+    const artist = prompt('Enter new artist:');
+    const year = prompt('Enter new year:');
+
+    const requestData = {
+      title: title,
+      artist: artist,
+      year: year,
+    };
+
+    const response = await fetch(`/api/albums/${albumId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestData),
+    });
+    const responseData = await response.json();
+    alert(responseData.message);
+    if (response.ok) {
+      fetchAlbums();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+
+const albumsTable = document.querySelector('#albums-table');
   fetch('/api/albums')
     .then(response => response.json())
     .then(data => {
@@ -93,11 +132,15 @@ async function deleteAlbum(albumId) {
         const deleteCell = document.createElement('button');
         deleteCell.textContent = "Delete"
         deleteCell.addEventListener("click",()=>deleteAlbum(album._id));
+        const updateCell = document.createElement('button');
+        updateCell.textContent = "Update"
+        updateCell.addEventListener("click",()=>updateAlbum(album._id));
         row.appendChild(titleCell);
         row.appendChild(artistCell);
         row.appendChild(yearCell);
         row.appendChild(idCell);
         row.appendChild(deleteCell);
+        row.appendChild(updateCell);
         albumsTable.querySelector('tbody').appendChild(row);
       });
     })

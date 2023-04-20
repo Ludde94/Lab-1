@@ -32,13 +32,14 @@ async function run() {
 }
 run().catch(console.dir);
 
+//find all the albums
 async function findAll() {
     await client.connect();
     const cursor = client.db("musicalbums").collection("albums").find();
     const results = await cursor.toArray();
     return JSON.stringify(results)
 }
-
+//check if album exists
 async function isAlbumInDatabase(title,artist) {
     try {
       await client.connect();
@@ -53,7 +54,28 @@ async function isAlbumInDatabase(title,artist) {
 async function addToDatabase(newDocument) {
     await client.db("musicalbums").collection("albums").insertOne(newDocument);
 }
+//update album
+app.put('/api/albums/:id', async (req, res) => {
+    const albumId = req.params.id;
+    const albumData = req.body;
 
+    try {
+        await client.connect();
+        const filter = { _id: new ObjectId(albumId) };
+        const updateDoc = { $set: albumData };
+        const result = await client
+        .db('musicalbums')
+        .collection('albums')
+        .updateOne(filter, updateDoc);
+        res.json({ message: 'Album updated successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to update album' });
+    } finally {
+        await client.close();
+    }
+});
+//delete album
 app.delete('/api/albums/:id',async(req,res)=>{
     const id = req.body;
     try{
@@ -66,6 +88,7 @@ app.delete('/api/albums/:id',async(req,res)=>{
     }
 })
 
+//add to database
 app.post('/api/albums', async (req, res) => {
     const { title, artist, year } = req.body;
     if (!title || !artist || !year) {
@@ -94,7 +117,6 @@ app.get('/api/albums/:title', async (req, res) => {
       res.status(500).send('Internal server error');
     }
   });
-
 //all
 app.get('/api/albums', async (req, res) => {
     await client.connect();
@@ -102,11 +124,9 @@ app.get('/api/albums', async (req, res) => {
     res.send(albumsData);
 })
 
-
 app.get('/', function(req, res) {
     res.sendFile(path.join(__dirname, '/index.html'));
 })
-
 
 app.listen(process.env.PORT, () => {
     console.log("Server listening on port: " + process.env.PORT)

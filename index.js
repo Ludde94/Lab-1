@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion,ObjectId } = require('mongodb');
 const uri = process.env.CONNECTION_URL;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -17,6 +17,7 @@ const client = new MongoClient(uri, {
         deprecationErrors: true,
     }
 });
+
 async function run() {
     try {
         // Connect the client to the server    (optional starting in v4.7)
@@ -32,6 +33,7 @@ async function run() {
 run().catch(console.dir);
 
 async function findAll() {
+    await client.connect();
     const cursor = client.db("musicalbums").collection("albums").find();
     const results = await cursor.toArray();
     return JSON.stringify(results)
@@ -48,14 +50,39 @@ async function isAlbumInDatabase(title,artist) {
       return false;
     }
 }
+async function addToDatabase(newDocument) {
+    await client.db("musicalbums").collection("albums").insertOne(newDocument);
+}
+
+app.delete('/api/albums/:id',async(req,res)=>{
+    const id = req.body;
+    try{
+        await client.connect();
+        const query = { _id: new ObjectId(id) };
+        const result = await client.db("musicalbums").collection("albums").deleteOne(query);
+    }
+    finally{
+        await client.close()
+    }
+})
 
 app.post('/api/albums', async (req, res) => {
-    
-    const { title, artist } = req.body; // extract variables from request body
-    console.log(req.body);
-    await client.connect();
-    console.log(await isAlbumInDatabase(title,artist));
-})
+    const { title, artist, year } = req.body;
+    if (!title || !artist || !year) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    if (await isAlbumInDatabase(title, artist)) {
+      return res.status(409).json({ error: 'Album already exists' });
+    }
+    await addToDatabase({
+        title: `${title}`,
+        artist_name: `${artist}`,
+        year: parseInt(year)
+    });
+    const insertedAlbum = await client.db("musicalbums").collection("albums").findOne({ title: title, artist_name: artist });
+    res.status(201).json({ id: insertedAlbum._id.toString(), title, artist, year });
+});
+
 //by title
 app.get('/api/albums/:title', async (req, res) => {
     await client.connect();
@@ -74,7 +101,6 @@ app.get('/api/albums', async (req, res) => {
     const albumsData = await findAll();
     res.send(albumsData);
 })
-
 
 
 app.get('/', function(req, res) {

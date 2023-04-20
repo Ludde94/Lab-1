@@ -1,11 +1,27 @@
-<form action="http://localhost:3000/api/albums" method="POST">
-    <input type="text" name="title" placeholder="Title" required>
-    <input type="text" name="artist" placeholder="Artist" required>
-    <input type="number" name="year" placeholder="Year" required>
+
+<form id="my-form">
+    <input type="text" id="title" name="title" placeholder="Title" required>
+    <input type="text" id="artist" name="artist" placeholder="Artist" required>
+    <input type="number" id="year" name="year" placeholder="Year" required>
     <button type="submit">Submit</button>
-  </form>
+</form>
+<div id="error-message"></div>
+
+<table id="albums-table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Artist</th>
+        <th>Year</th>
+        <th>id</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
 <script>
     const form = document.querySelector('#my-form');
+    const errorMessage = document.querySelector('#error-message');
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -26,6 +42,65 @@
             },
             body: JSON.stringify(requestData),
         });
-        console.log(response);
+
+        if (response.ok) {
+            // clear the form and any previous error messages
+            form.reset();
+            errorMessage.textContent = '';
+        } else {
+            const data = await response.json();
+            errorMessage.textContent = data.error;
+        }
     });
+
+async function deleteAlbum(albumId) {
+    console.log(albumId)
+        try {
+            const response = await fetch('/api/albums/:id', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: albumId }),
+            });
+
+            const responseData = await response.json();
+            alert(responseData.message);
+
+            if (response.ok) {
+                fetchAlbums();
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    const albumsTable = document.querySelector('#albums-table');
+  fetch('/api/albums')
+    .then(response => response.json())
+    .then(data => {
+      // generate table rows for each album
+      data.forEach(album => {
+        const row = document.createElement('tr');
+        const titleCell = document.createElement('td');
+        titleCell.textContent = album.title;
+        const artistCell = document.createElement('td');
+        artistCell.textContent = album.artist_name;
+        const yearCell = document.createElement('td');
+        yearCell.textContent = album.year;
+        const idCell = document.createElement('td');
+        idCell.textContent = album._id;
+        const deleteCell = document.createElement('button');
+        deleteCell.textContent = "Delete"
+        deleteCell.addEventListener("click",()=>deleteAlbum(album._id));
+        row.appendChild(titleCell);
+        row.appendChild(artistCell);
+        row.appendChild(yearCell);
+        row.appendChild(idCell);
+        row.appendChild(deleteCell);
+        albumsTable.querySelector('tbody').appendChild(row);
+      });
+    })
+    .catch(error => console.error(error));
+
 </script>

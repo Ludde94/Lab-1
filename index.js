@@ -2,6 +2,10 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const path = require('path');
+const bodyParser = require('body-parser');
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const uri = process.env.CONNECTION_URL;
@@ -33,6 +37,25 @@ async function findAll() {
     return JSON.stringify(results)
 }
 
+async function isAlbumInDatabase(title,artist) {
+    try {
+      await client.connect();
+      const query = { title:title, artist_name:artist};
+      const albumData = await client.db("musicalbums").collection("albums").findOne(query);
+      return albumData !== null;
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
+}
+
+app.post('/api/albums', async (req, res) => {
+    
+    const { title, artist } = req.body; // extract variables from request body
+    console.log(req.body);
+    await client.connect();
+    console.log(await isAlbumInDatabase(title,artist));
+})
 //by title
 app.get('/api/albums/:title', async (req, res) => {
     await client.connect();

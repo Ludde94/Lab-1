@@ -1,1 +1,31 @@
-<h1>emil är söt</h1>
+<form action="http://localhost:3000/api/albums" method="POST">
+    <input type="text" name="title" placeholder="Title" required>
+    <input type="text" name="artist" placeholder="Artist" required>
+    <input type="number" name="year" placeholder="Year" required>
+    <button type="submit">Submit</button>
+  </form>
+<script>
+    const form = document.querySelector('#my-form');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.querySelector('#title').value;
+        const artist = document.querySelector('#artist').value;
+        const year = document.querySelector('#year').value;
+
+        const requestData = {
+            title: title,
+            artist: artist,
+            year: year,
+        };
+
+        const response = await fetch('/api/albums', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData),
+        });
+        console.log(response);
+    });
+</script>

@@ -27,6 +27,33 @@ async function run() {
 }
 run().catch(console.dir);
 
+async function findAll() {
+    const cursor = client.db("musicalbums").collection("albums").find();
+    const results = await cursor.toArray();
+    return JSON.stringify(results)
+}
+
+//by title
+app.get('/api/albums/:title', async (req, res) => {
+    await client.connect();
+    try {
+      const albumData = await client.db('musicalbums').collection('albums').find({ title: req.params.title }).toArray();
+      return albumData.length === 0 ? res.status(404).send('Album not found') : res.send(albumData);
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Internal server error');
+    }
+  });
+
+//all
+app.get('/api/albums', async (req, res) => {
+    await client.connect();
+    const albumsData = await findAll();
+    res.send(albumsData);
+})
+
+
+
 app.get('/', function(req, res) {
     res.sendFile(path.join(__dirname, '/index.html'));
 })

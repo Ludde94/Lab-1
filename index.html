@@ -80,7 +80,6 @@ try {
 }
 }
 async function updateAlbum(albumId) {
-  console.log(albumId);
   try {
     const confirmed = window.confirm("Are you sure you want to update this album?");
     if (!confirmed) {
@@ -92,7 +91,7 @@ async function updateAlbum(albumId) {
 
     const requestData = {
       title: title,
-      artist: artist,
+      artist_name: artist,
       year: year,
     };
 
